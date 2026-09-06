@@ -10,9 +10,14 @@ That response also embeds the interbank weighted-average rate
 ("อัตราแลกเปลี่ยนถัวเฉลี่ยถ่วงน้ำหนักระหว่างธนาคาร") as a number inside its
 "description" HTML field, which is extracted here via regex.
 
+Note: some currencies (e.g. JPY) are quoted by the BOT per 100 units rather
+than per 1 unit. The "unit" field from the API is recorded in the output
+line so this basis is always clear.
+
 Usage:
     python bot_exchange_rate.py
     python bot_exchange_rate.py --currency EUR
+    python bot_exchange_rate.py --currency JPY
     python bot_exchange_rate.py --currency USD --outfile my_rates.txt
 """
 
@@ -77,10 +82,12 @@ def append_rate(row: dict, weighted_avg: str, outfile: Path) -> str:
     currency = row["currency_id"]
     buying_transfer = row["buying_transfer"]
     selling = row["selling"]
+    # currency บางสกุล เช่น JPY จะเสนอราคาต่อ 100 หน่วย (ไม่ใช่ 1 หน่วย) ธปท. จะใส่ค่านี้ไว้ใน field "unit"
+    unit = row.get("unit", 1)
 
     # Step 2: ประกอบเป็นบรรทัดข้อความเดียว คั่นด้วยจุลภาค พร้อม \n ต่อท้ายเพื่อขึ้นบรรทัดใหม่
     line = (
-        f"{date},{currency},buying={buying_transfer},selling={selling},"
+        f"{date},{currency},unit={unit},buying={buying_transfer},selling={selling},"
         f"weighted_avg={weighted_avg}\n"
     )
 
